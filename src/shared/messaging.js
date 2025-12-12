@@ -1,0 +1,17 @@
+export const MessageType = Object.freeze({
+  GET_STATE: "UMB_GET_STATE",
+  APPLY: "UMB_APPLY",
+  SET_TAB_OVERRIDE: "UMB_SET_TAB_OVERRIDE",
+  SET_DISABLE_RULE: "UMB_SET_DISABLE_RULE",
+  SET_THEME: "UMB_SET_THEME",
+  SET_INTENSE_MODE: "UMB_SET_INTENSE_MODE",
+  SET_NIGHTLIGHT: "UMB_SET_NIGHTLIGHT",
+  ADD_AUTOACTIVATE: "UMB_ADD_AUTOACTIVATE",
+  REMOVE_AUTOACTIVATE: "UMB_REMOVE_AUTOACTIVATE",
+  OPTIONS_GET_SETTINGS: "UMB_OPTIONS_GET_SETTINGS",
+  OPTIONS_SET_SETTINGS: "UMB_OPTIONS_SET_SETTINGS"
+});
+
+export function isUmbreonMessage(msg) {
+  return !!msg && typeof msg === "object" && typeof msg.type === "string" && msg.type.startsWith("UMB_");
+}

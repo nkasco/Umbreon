@@ -1,0 +1,9 @@
+:root[data-umbreon="on"] {
+  --umb-bg: #0f1115;
+  --umb-bg2: #141821;
+  --umb-text: #e6eaf2;
+  --umb-muted: #aeb8cc;
+  --umb-link: #8ab4f8;
+  --umb-border: #2a3140;
+  --umb-shadow: rgba(0, 0, 0, 0.35);
+}

@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Umbreon Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <header class="row">
+        <div>
+          <h1>Umbreon</h1>
+          <div class="sub">Creator: Nathan Kasco</div>
+        </div>
+      </header>
+
+      <section class="card">
+        <h2>Nightlight</h2>
+        <label class="check">
+          <input id="nightlight" type="checkbox" />
+          <span>Attempt to enable Umbreon on any website</span>
+        </label>
+        <div class="hint" id="nightlightHint"></div>
+      </section>
+
+      <section class="card">
+        <h2>Auto-Activate URLs</h2>
+        <div class="hint">Add an origin (example.com) or full URL prefix (https://example.com/path).</div>
+
+        <div class="row" style="margin-top: 10px;">
+          <input id="ruleInput" type="text" placeholder="example.com" />
+          <button id="addRule" type="button">Add</button>
+        </div>
+
+        <ul id="rulesList" class="list"></ul>
+      </section>
+
+      <section class="card">
+        <h2>Themes</h2>
+        <label class="label" for="theme">Default theme</label>
+        <select id="theme">
+          <option value="classic">Classic</option>
+          <option value="amoled">AMOLED</option>
+          <option value="dim">Dim</option>
+          <option value="sepia">Sepia</option>
+        </select>
+
+        <div style="margin-top: 12px;">
+          <label class="check">
+            <input id="intenseMode" type="checkbox" />
+            <span>Intense Mode</span>
+          </label>
+          <div class="hint">More aggressive overrides; may affect some sites.</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Disabled Lists</h2>
+        <div class="hint">Managed from the popup (Disable on this site/page).</div>
+      </section>
+
+      <footer class="foot">Umbreon is MIT Licensed.</footer>
+    </main>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

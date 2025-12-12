@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Umbreon",
+  "version": "0.1.0",
+  "description": "Open Source Chrome Dark Mode Extension - Make any website dark mode",
+  "author": "Nathan Kasco",
+  "action": {
+    "default_title": "Umbreon",
+    "default_popup": "src/popup/popup.html"
+  },
+  "options_page": "src/options/options.html",
+  "background": {
+    "service_worker": "src/background/service_worker.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>"
+  ],
+  "minimum_chrome_version": "114"
+}

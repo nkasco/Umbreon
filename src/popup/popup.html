@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Umbreon</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="row">
+      <div>
+        <div class="title">Umbreon</div>
+        <div class="subtitle" id="siteLabel">—</div>
+      </div>
+      <button id="openOptions" class="link" type="button">Settings</button>
+    </header>
+
+    <main>
+      <div class="card">
+        <div class="row">
+          <div>
+            <div class="label">Dark mode</div>
+            <div class="hint" id="statusHint">—</div>
+          </div>
+          <button id="toggleBtn" class="btn" type="button">Toggle</button>
+        </div>
+
+        <div class="sep"></div>
+
+        <label class="check">
+          <input id="disableSite" type="checkbox" />
+          <span>Disable on this site</span>
+        </label>
+
+        <label class="check">
+          <input id="disablePage" type="checkbox" />
+          <span>Disable on this page</span>
+        </label>
+
+        <div class="sep"></div>
+
+        <label class="label" for="themeSelect">Theme</label>
+        <select id="themeSelect">
+          <option value="classic">Classic</option>
+          <option value="amoled">AMOLED</option>
+          <option value="dim">Dim</option>
+          <option value="sepia">Sepia</option>
+        </select>
+
+        <div class="sep"></div>
+
+        <label class="check">
+          <input id="intenseMode" type="checkbox" />
+          <span>Intense Mode</span>
+        </label>
+
+        <div class="hint" id="permHint"></div>
+      </div>
+
+      <div class="footer">Creator: Nathan Kasco</div>
+    </main>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
