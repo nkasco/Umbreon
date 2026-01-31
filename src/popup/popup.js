@@ -13,6 +13,7 @@ function setDisabled(disabled) {
   document.getElementById("disablePage").disabled = disabled;
   document.getElementById("themeSelect").disabled = disabled;
   document.getElementById("intenseMode").disabled = disabled;
+  document.getElementById("autoEnableSite").disabled = disabled;
 }
 
 async function refresh() {
@@ -50,6 +51,20 @@ async function refresh() {
 
   document.getElementById("statusHint").textContent = state.enabled ? "Enabled" : "Disabled";
   document.getElementById("toggleBtn").textContent = state.enabled ? "Turn off" : "Turn on";
+
+  // Auto-enable button state
+  const autoEnableBtn = document.getElementById("autoEnableSite");
+  const autoEnableHint = document.getElementById("autoEnableHint");
+
+  if (state.autoActivateMatch) {
+    autoEnableBtn.textContent = "Remove from auto-enable";
+    autoEnableBtn.dataset.action = "remove";
+    autoEnableHint.textContent = "This site will auto-enable dark mode.";
+  } else {
+    autoEnableBtn.textContent = "Always enable on this site";
+    autoEnableBtn.dataset.action = "add";
+    autoEnableHint.textContent = "";
+  }
 
   const permHint = document.getElementById("permHint");
   if (state.nightlightEnabled && !state.hasAllSites) {
@@ -134,6 +149,42 @@ document.getElementById("openOptions").addEventListener("click", async () => {
   if (chrome.runtime.openOptionsPage) {
     await chrome.runtime.openOptionsPage();
   }
+});
+
+document.getElementById("autoEnableSite").addEventListener("click", async () => {
+  const tab = await getActiveTab();
+  if (!tab?.id || !tab?.url) return;
+
+  const origin = getOrigin(tab.url);
+  if (!origin) return;
+
+  const btn = document.getElementById("autoEnableSite");
+
+  if (btn.dataset.action === "add") {
+    // Request <all_urls> permission if not already granted
+    const granted = await chrome.permissions.request({ origins: ["<all_urls>"] });
+    if (!granted) return;
+
+    await chrome.runtime.sendMessage({
+      type: MessageType.ADD_AUTOACTIVATE,
+      rule: origin
+    });
+
+    // Also enable dark mode on the current tab immediately
+    await chrome.runtime.sendMessage({
+      type: MessageType.SET_TAB_OVERRIDE,
+      tabId: tab.id,
+      url: tab.url,
+      enabled: true
+    });
+  } else {
+    await chrome.runtime.sendMessage({
+      type: MessageType.REMOVE_AUTOACTIVATE,
+      rule: origin
+    });
+  }
+
+  await refresh();
 });
 
 refresh();
