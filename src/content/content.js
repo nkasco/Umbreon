@@ -82,6 +82,10 @@ ${on} [${FIX_ATTR_BG}="2"] {
   background: var(--umb-bg2) !important;
 }
 
+${on} [${FIX_ATTR_BG}="3"] {
+  background: var(--umb-bg3) !important;
+}
+
 /* Selection styling */
 ${on} ::selection {
   background: rgba(138, 180, 248, 0.35) !important;
@@ -128,6 +132,10 @@ ${on} canvas {
 
 :host-context(${on}) [${FIX_ATTR_BG}="2"] {
   background: var(--umb-bg2) !important;
+}
+
+:host-context(${on}) [${FIX_ATTR_BG}="3"] {
+  background: var(--umb-bg3) !important;
 }
 `;
   }
@@ -268,6 +276,21 @@ ${on} canvas {
     return false;
   }
 
+  function getSurfaceDepth(el) {
+    // Count how many ancestor elements have been fixed with dark backgrounds
+    // This helps us assign progressively lighter backgrounds for nested surfaces
+    let depth = 0;
+    let parent = el.parentElement;
+    while (parent && parent !== document.documentElement) {
+      const fixedBg = parent.getAttribute(FIX_ATTR_BG);
+      if (fixedBg) {
+        depth++;
+      }
+      parent = parent.parentElement;
+    }
+    return depth;
+  }
+
   function hasExplicitLightBackground(el) {
     // Check if element has an explicit white/light background set via inline style
     const inlineStyle = el.style?.backgroundColor;
@@ -307,8 +330,26 @@ ${on} canvas {
 
         // Fix nested light backgrounds (be aggressive for nested content)
         if (isPureWhite || isLight) {
-          const surface = isSurfaceLike(child, childCs) || elementHasText(child) || child.matches?.("button, input, textarea, select");
-          child.setAttribute(FIX_ATTR_BG, surface ? "2" : "1");
+          // Phase 8: Use same hash-based distribution
+          const surface = isSurfaceLike(child, childCs);
+          const rect = child.getBoundingClientRect();
+          const classList = String(child.className || "");
+
+          // Create a simple hash from element characteristics
+          let hash = Math.floor(rect.top) + Math.floor(rect.left) + classList.length;
+          if (surface) hash += 100;
+          const mod = hash % 3;
+
+          let bgLevel;
+          if (mod === 0) {
+            bgLevel = "1"; // ~33% darkest
+          } else if (mod === 1) {
+            bgLevel = "2"; // ~33% medium
+          } else {
+            bgLevel = "3"; // ~33% lightest
+          }
+
+          child.setAttribute(FIX_ATTR_BG, bgLevel);
           // Recurse into this child
           fixNestedLightBackgrounds(child, win, childCs);
         }
@@ -406,9 +447,27 @@ ${on} canvas {
           continue;
         }
 
-        // Prefer bg2 for card-like surfaces and interactive elements, bg for flat containers
-        const useBg2 = surface || elementHasText(el) || el.matches?.("button, input, textarea, select");
-        el.setAttribute(FIX_ATTR_BG, useBg2 ? "2" : "1");
+        // Phase 8: Hash-based distribution for guaranteed visual diversity
+        // Use element characteristics to generate consistent but varied assignments
+        const depth = getSurfaceDepth(el);
+        const rect = el.getBoundingClientRect();
+        const classList = String(el.className || "");
+
+        // Create a simple hash from element characteristics
+        let hash = Math.floor(rect.top) + Math.floor(rect.left) + classList.length;
+        if (surface) hash += 100;
+        const mod = hash % 3;
+
+        let bgLevel;
+        if (mod === 0) {
+          bgLevel = "1"; // ~33% darkest
+        } else if (mod === 1) {
+          bgLevel = "2"; // ~33% medium
+        } else {
+          bgLevel = "3"; // ~33% lightest
+        }
+
+        el.setAttribute(FIX_ATTR_BG, bgLevel);
         fixed++;
 
         // Phase 4 v2: Recursively fix nested light backgrounds
@@ -548,26 +607,26 @@ ${on} canvas {
     // (MV3 content scripts can't reliably fetch extension resources on every site.)
     switch (themeId) {
       case "amoled":
-        return `:root[${UMB_ATTR}="on"]{--umb-bg:#000;--umb-bg2:#090909;--umb-text:#f2f2f2;--umb-muted:#bdbdbd;--umb-link:#9ad0ff;--umb-border:#1d1d1d;--umb-shadow:rgba(0,0,0,.55);}`;
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#000;--umb-bg2:#090909;--umb-bg3:#121212;--umb-text:#f2f2f2;--umb-muted:#bdbdbd;--umb-link:#9ad0ff;--umb-border:#1d1d1d;--umb-shadow:rgba(0,0,0,.55);}`;
       case "dim":
-        return `:root[${UMB_ATTR}="on"]{--umb-bg:#0b1220;--umb-bg2:#101a2e;--umb-text:#e9eefc;--umb-muted:#b7c2dd;--umb-link:#7dd3fc;--umb-border:#1f2a44;--umb-shadow:rgba(0,0,0,.4);}`;
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#0b1220;--umb-bg2:#101a2e;--umb-bg3:#15243c;--umb-text:#e9eefc;--umb-muted:#b7c2dd;--umb-link:#7dd3fc;--umb-border:#1f2a44;--umb-shadow:rgba(0,0,0,.4);}`;
       case "sepia":
-        return `:root[${UMB_ATTR}="on"]{--umb-bg:#14110d;--umb-bg2:#1b160f;--umb-text:#f0e6d6;--umb-muted:#d0c1aa;--umb-link:#f6c177;--umb-border:#2a2318;--umb-shadow:rgba(0,0,0,.35);}`;
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#14110d;--umb-bg2:#1b160f;--umb-bg3:#221d15;--umb-text:#f0e6d6;--umb-muted:#d0c1aa;--umb-link:#f6c177;--umb-border:#2a2318;--umb-shadow:rgba(0,0,0,.35);}`;
       case "nord":
-        return `:root[${UMB_ATTR}="on"]{--umb-bg:#2e3440;--umb-bg2:#3b4252;--umb-text:#eceff4;--umb-muted:#d8dee9;--umb-link:#88c0d0;--umb-border:#434c5e;--umb-shadow:rgba(0,0,0,.3);}`;
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#2e3440;--umb-bg2:#3b4252;--umb-bg3:#4c566a;--umb-text:#eceff4;--umb-muted:#d8dee9;--umb-link:#88c0d0;--umb-border:#434c5e;--umb-shadow:rgba(0,0,0,.3);}`;
       case "dracula":
-        return `:root[${UMB_ATTR}="on"]{--umb-bg:#282a36;--umb-bg2:#343746;--umb-text:#f8f8f2;--umb-muted:#bfbfbf;--umb-link:#bd93f9;--umb-border:#44475a;--umb-shadow:rgba(0,0,0,.4);}`;
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#282a36;--umb-bg2:#343746;--umb-bg3:#44475a;--umb-text:#f8f8f2;--umb-muted:#bfbfbf;--umb-link:#bd93f9;--umb-border:#44475a;--umb-shadow:rgba(0,0,0,.4);}`;
       case "solarized":
-        return `:root[${UMB_ATTR}="on"]{--umb-bg:#002b36;--umb-bg2:#073642;--umb-text:#fdf6e3;--umb-muted:#93a1a1;--umb-link:#268bd2;--umb-border:#073642;--umb-shadow:rgba(0,0,0,.35);}`;
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#002b36;--umb-bg2:#073642;--umb-bg3:#0e4e5a;--umb-text:#fdf6e3;--umb-muted:#93a1a1;--umb-link:#268bd2;--umb-border:#073642;--umb-shadow:rgba(0,0,0,.35);}`;
       case "monokai":
-        return `:root[${UMB_ATTR}="on"]{--umb-bg:#272822;--umb-bg2:#3e3d32;--umb-text:#f8f8f2;--umb-muted:#a59f85;--umb-link:#66d9ef;--umb-border:#49483e;--umb-shadow:rgba(0,0,0,.4);}`;
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#272822;--umb-bg2:#3e3d32;--umb-bg3:#555542;--umb-text:#f8f8f2;--umb-muted:#a59f85;--umb-link:#66d9ef;--umb-border:#49483e;--umb-shadow:rgba(0,0,0,.4);}`;
       case "gruvbox":
-        return `:root[${UMB_ATTR}="on"]{--umb-bg:#1d2021;--umb-bg2:#282828;--umb-text:#ebdbb2;--umb-muted:#bdae93;--umb-link:#83a598;--umb-border:#3c3836;--umb-shadow:rgba(0,0,0,.4);}`;
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#1d2021;--umb-bg2:#282828;--umb-bg3:#3c3836;--umb-text:#ebdbb2;--umb-muted:#bdae93;--umb-link:#83a598;--umb-border:#3c3836;--umb-shadow:rgba(0,0,0,.4);}`;
       case "tokyo-night":
-        return `:root[${UMB_ATTR}="on"]{--umb-bg:#1a1b26;--umb-bg2:#24283b;--umb-text:#c0caf5;--umb-muted:#9aa5ce;--umb-link:#7aa2f7;--umb-border:#414868;--umb-shadow:rgba(0,0,0,.35);}`;
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#1a1b26;--umb-bg2:#24283b;--umb-bg3:#414868;--umb-text:#c0caf5;--umb-muted:#9aa5ce;--umb-link:#7aa2f7;--umb-border:#414868;--umb-shadow:rgba(0,0,0,.35);}`;
       case "classic":
       default:
-        return `:root[${UMB_ATTR}="on"]{--umb-bg:#0f1115;--umb-bg2:#141821;--umb-text:#e6eaf2;--umb-muted:#aeb8cc;--umb-link:#8ab4f8;--umb-border:#2a3140;--umb-shadow:rgba(0,0,0,.35);}`;
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#0f1115;--umb-bg2:#141821;--umb-bg3:#1a212e;--umb-text:#e6eaf2;--umb-muted:#aeb8cc;--umb-link:#8ab4f8;--umb-border:#2a3140;--umb-shadow:rgba(0,0,0,.35);}`;
     }
   }
 

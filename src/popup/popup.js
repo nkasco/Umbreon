@@ -161,7 +161,9 @@ document.getElementById("autoEnableSite").addEventListener("click", async () => 
   } else {
     await chrome.runtime.sendMessage({
       type: MessageType.REMOVE_AUTOACTIVATE,
-      rule: origin
+      rule: origin,
+      tabId: tab.id,
+      url: tab.url
     });
   }
 
