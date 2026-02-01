@@ -4,11 +4,8 @@ export function defaultSettings() {
   return {
     version: 1,
     nightlightEnabled: false,
-    intenseMode: false,
     themeId: "classic",
-    autoActivateRules: [],
-    disableOrigins: [],
-    disablePages: []
+    autoActivateRules: []
   };
 }
 

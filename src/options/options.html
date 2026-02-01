@@ -17,10 +17,10 @@
 
       <section class="card">
         <h2>Nightlight</h2>
-        <label class="check">
-          <input id="nightlight" type="checkbox" />
-          <span>Attempt to enable Umbreon on any website</span>
-        </label>
+        <button id="nightlightToggle" class="toggle-btn" type="button">
+          <span class="toggle-icon">🌙</span>
+          <span class="toggle-label">Enable dark mode on all websites</span>
+        </button>
         <div class="hint" id="nightlightHint"></div>
       </section>
 
@@ -38,29 +38,56 @@
 
       <section class="card">
         <h2>Themes</h2>
-        <label class="label" for="theme">Default theme</label>
-        <select id="theme">
-          <option value="classic">Classic</option>
-          <option value="amoled">AMOLED</option>
-          <option value="dim">Dim</option>
-          <option value="sepia">Sepia</option>
-        </select>
-
-        <div style="margin-top: 12px;">
-          <label class="check">
-            <input id="intenseMode" type="checkbox" />
-            <span>Intense Mode</span>
-          </label>
-          <div class="hint">More aggressive overrides; may affect some sites.</div>
+        <div class="hint" style="margin-bottom: 12px;">Choose your preferred dark mode theme</div>
+        <div class="theme-grid" id="themeGrid">
+          <div class="theme-card" data-theme="classic">
+            <div class="theme-preview" style="background-color: #0f1115;"></div>
+            <div class="theme-name">Classic</div>
+          </div>
+          <div class="theme-card" data-theme="amoled">
+            <div class="theme-preview" style="background-color: #000;"></div>
+            <div class="theme-name">AMOLED</div>
+          </div>
+          <div class="theme-card" data-theme="dim">
+            <div class="theme-preview" style="background-color: #0b1220;"></div>
+            <div class="theme-name">Dim</div>
+          </div>
+          <div class="theme-card" data-theme="sepia">
+            <div class="theme-preview" style="background-color: #14110d;"></div>
+            <div class="theme-name">Sepia</div>
+          </div>
+          <div class="theme-card" data-theme="nord">
+            <div class="theme-preview" style="background-color: #2e3440;"></div>
+            <div class="theme-name">Nord</div>
+          </div>
+          <div class="theme-card" data-theme="dracula">
+            <div class="theme-preview" style="background-color: #282a36;"></div>
+            <div class="theme-name">Dracula</div>
+          </div>
+          <div class="theme-card" data-theme="solarized">
+            <div class="theme-preview" style="background-color: #002b36;"></div>
+            <div class="theme-name">Solarized</div>
+          </div>
+          <div class="theme-card" data-theme="monokai">
+            <div class="theme-preview" style="background-color: #272822;"></div>
+            <div class="theme-name">Monokai</div>
+          </div>
+          <div class="theme-card" data-theme="gruvbox">
+            <div class="theme-preview" style="background-color: #1d2021;"></div>
+            <div class="theme-name">Gruvbox</div>
+          </div>
+          <div class="theme-card" data-theme="tokyo-night">
+            <div class="theme-preview" style="background-color: #1a1b26;"></div>
+            <div class="theme-name">Tokyo Night</div>
+          </div>
         </div>
       </section>
 
-      <section class="card">
-        <h2>Disabled Lists</h2>
-        <div class="hint">Managed from the popup (Disable on this site/page).</div>
-      </section>
-
-      <footer class="foot">Umbreon is MIT Licensed.</footer>
+      <footer class="foot">
+        <a href="https://github.com/nkasco/Umbreon" target="_blank" rel="noopener" style="color: var(--umb-link); text-decoration: none;">
+          View on GitHub →
+        </a>
+      </footer>
     </main>
 
     <script type="module" src="options.js"></script>

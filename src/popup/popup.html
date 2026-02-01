@@ -27,32 +27,26 @@
 
         <div class="sep"></div>
 
-        <label class="check">
-          <input id="disableSite" type="checkbox" />
-          <span>Disable on this site</span>
-        </label>
-
-        <label class="check">
-          <input id="disablePage" type="checkbox" />
-          <span>Disable on this page</span>
-        </label>
+        <button id="autoEnableSite" class="btn" type="button" style="width: 100%">
+          Always enable on this site
+        </button>
+        <p class="hint" id="autoEnableHint"></p>
 
         <div class="sep"></div>
 
-        <label class="label" for="themeSelect">Theme</label>
-        <select id="themeSelect">
-          <option value="classic">Classic</option>
-          <option value="amoled">AMOLED</option>
-          <option value="dim">Dim</option>
-          <option value="sepia">Sepia</option>
-        </select>
-
-        <div class="sep"></div>
-
-        <label class="check">
-          <input id="intenseMode" type="checkbox" />
-          <span>Intense Mode</span>
-        </label>
+        <div class="label">Theme</div>
+        <div class="theme-picker" id="themePicker">
+          <button class="theme-swatch" data-theme="classic" title="Classic" style="background-color: #0f1115;"></button>
+          <button class="theme-swatch" data-theme="amoled" title="AMOLED" style="background-color: #000;"></button>
+          <button class="theme-swatch" data-theme="dim" title="Dim" style="background-color: #0b1220;"></button>
+          <button class="theme-swatch" data-theme="sepia" title="Sepia" style="background-color: #14110d;"></button>
+          <button class="theme-swatch" data-theme="nord" title="Nord" style="background-color: #2e3440;"></button>
+          <button class="theme-swatch" data-theme="dracula" title="Dracula" style="background-color: #282a36;"></button>
+          <button class="theme-swatch" data-theme="solarized" title="Solarized" style="background-color: #002b36;"></button>
+          <button class="theme-swatch" data-theme="monokai" title="Monokai" style="background-color: #272822;"></button>
+          <button class="theme-swatch" data-theme="gruvbox" title="Gruvbox" style="background-color: #1d2021;"></button>
+          <button class="theme-swatch" data-theme="tokyo-night" title="Tokyo Night" style="background-color: #1a1b26;"></button>
+        </div>
 
         <div class="hint" id="permHint"></div>
       </div>

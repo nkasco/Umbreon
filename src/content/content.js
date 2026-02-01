@@ -14,14 +14,12 @@
   });
 
   const UMB_ATTR = "data-umbreon";
-  const INTENSE_ATTR = "data-umbreon-intense";
   const STYLE_ID = "umbreon-style";
   const THEME_ID = "umbreon-theme";
   const SHADOW_STYLE_ID = "umbreon-shadow-style";
 
   let mutationObserver = null;
   let fixScheduled = false;
-  let intenseMode = false;
 
   const FIX_ATTR_FG = "data-umb-fg";
   const FIX_ATTR_LINK = "data-umb-link";
@@ -51,105 +49,53 @@
   }
 
   function baseCss() {
-    // Aggressive dark mode: force dark background/text across most elements.
-    // This is intentionally heavy-handed to make "all dark mode" work on more sites.
+    // Phase 4: Simplified CSS strategy
+    // - No aggressive background overrides on :root/body (causes issues on dark sites)
+    // - Rely on the contrast fixer to handle text/backgrounds surgically
+    // - Keep CSS variables, link styling, and contrast fix attribute rules
     const host = String(globalThis.location?.hostname || "");
     const invertCanvas = /(^|\.)docs\.google\.com$/i.test(host) || /(^|\.)sheets\.google\.com$/i.test(host);
+
+    const on = `:root[${UMB_ATTR}="on"]`;
+
     return `
-:root[${UMB_ATTR}="on"] {
+${on} {
   color-scheme: dark;
 }
 
-:root[${UMB_ATTR}="on"],
-:root[${UMB_ATTR}="on"] body {
-  background: var(--umb-bg) !important;
+/* Contrast fix attributes - applied by JavaScript to elements that need fixing */
+${on} [${FIX_ATTR_FG}] {
   color: var(--umb-text) !important;
   -webkit-text-fill-color: var(--umb-text) !important;
 }
 
-
-:root[${UMB_ATTR}="on"] [${FIX_ATTR_FG}] {
-  color: var(--umb-text) !important;
-  -webkit-text-fill-color: var(--umb-text) !important;
-}
-
-:root[${UMB_ATTR}="on"] [${FIX_ATTR_LINK}] {
+${on} [${FIX_ATTR_LINK}] {
   color: var(--umb-link) !important;
   -webkit-text-fill-color: var(--umb-link) !important;
 }
 
-:root[${UMB_ATTR}="on"] [${FIX_ATTR_BG}="1"] {
+${on} [${FIX_ATTR_BG}="1"] {
   background: var(--umb-bg) !important;
 }
 
-:root[${UMB_ATTR}="on"] [${FIX_ATTR_BG}="2"] {
+${on} [${FIX_ATTR_BG}="2"] {
   background: var(--umb-bg2) !important;
 }
 
-:root[${UMB_ATTR}="on"] a {
-  color: var(--umb-link) !important;
-  -webkit-text-fill-color: var(--umb-link) !important;
-}
-
-:root[${UMB_ATTR}="on"] pre,
-:root[${UMB_ATTR}="on"] code {
-  background: var(--umb-bg2) !important;
-  color: var(--umb-text) !important;
-  -webkit-text-fill-color: var(--umb-text) !important;
-}
-
-:root[${UMB_ATTR}="on"] input,
-:root[${UMB_ATTR}="on"] textarea,
-:root[${UMB_ATTR}="on"] select,
-:root[${UMB_ATTR}="on"] button {
-  background: var(--umb-bg2) !important;
-  color: var(--umb-text) !important;
-  -webkit-text-fill-color: var(--umb-text) !important;
-  caret-color: var(--umb-text) !important;
-  border-color: var(--umb-border) !important;
-}
-
-:root[${UMB_ATTR}="on"] input:-webkit-autofill,
-:root[${UMB_ATTR}="on"] textarea:-webkit-autofill,
-:root[${UMB_ATTR}="on"] select:-webkit-autofill {
-  -webkit-text-fill-color: var(--umb-text) !important;
-  caret-color: var(--umb-text) !important;
-  box-shadow: 0 0 0 1000px var(--umb-bg2) inset !important;
-  transition: background-color 999999s ease-out 0s !important;
-}
-
-:root[${UMB_ATTR}="on"] input:-webkit-autofill,
-:root[${UMB_ATTR}="on"] textarea:-webkit-autofill,
-:root[${UMB_ATTR}="on"] select:-webkit-autofill {
-  -webkit-text-fill-color: var(--umb-text) !important;
-  caret-color: var(--umb-text) !important;
-  box-shadow: 0 0 0 1000px var(--umb-bg2) inset !important;
-  transition: background-color 999999s ease-out 0s !important;
-}
-
-:root[${UMB_ATTR}="on"] input::placeholder,
-:root[${UMB_ATTR}="on"] textarea::placeholder {
-  color: var(--umb-muted) !important;
-  -webkit-text-fill-color: var(--umb-muted) !important;
-  opacity: 1 !important;
-}
-
-:root[${UMB_ATTR}="on"] * {
-  border-color: var(--umb-border) !important;
-}
-
-:root[${UMB_ATTR}="on"] ::selection {
+/* Selection styling */
+${on} ::selection {
   background: rgba(138, 180, 248, 0.35) !important;
 }
 
-:root[${UMB_ATTR}="on"] img,
-:root[${UMB_ATTR}="on"] video,
-:root[${UMB_ATTR}="on"] canvas,
-:root[${UMB_ATTR}="on"] svg {
+/* Prevent filter interference with media */
+${on} img,
+${on} video,
+${on} canvas,
+${on} svg {
   filter: none !important;
 }
 ${invertCanvas ? `
-:root[${UMB_ATTR}="on"] canvas {
+${on} canvas {
   filter: invert(1) hue-rotate(180deg) !important;
 }
 ` : ""}
@@ -164,15 +110,6 @@ ${invertCanvas ? `
     return `
 :host-context(${on}) {
   color-scheme: dark;
-}
-
-:host-context(${on}) :host {
-  color: var(--umb-text) !important;
-  -webkit-text-fill-color: var(--umb-text) !important;
-}
-
-:host-context(${on}) * {
-  border-color: var(--umb-border) !important;
 }
 
 :host-context(${on}) [${FIX_ATTR_FG}] {
@@ -191,43 +128,6 @@ ${invertCanvas ? `
 
 :host-context(${on}) [${FIX_ATTR_BG}="2"] {
   background: var(--umb-bg2) !important;
-}
-
-:host-context(${on}) a {
-  color: var(--umb-link) !important;
-  -webkit-text-fill-color: var(--umb-link) !important;
-}
-
-:host-context(${on}) pre,
-:host-context(${on}) code {
-  background: var(--umb-bg2) !important;
-}
-
-:host-context(${on}) input,
-:host-context(${on}) textarea,
-:host-context(${on}) select,
-:host-context(${on}) button {
-  background: var(--umb-bg2) !important;
-  color: var(--umb-text) !important;
-  -webkit-text-fill-color: var(--umb-text) !important;
-  caret-color: var(--umb-text) !important;
-  border-color: var(--umb-border) !important;
-}
-
-:host-context(${on}) input::placeholder,
-:host-context(${on}) textarea::placeholder {
-  color: var(--umb-muted) !important;
-  -webkit-text-fill-color: var(--umb-muted) !important;
-  opacity: 1 !important;
-}
-
-:host-context(${on}) input:-webkit-autofill,
-:host-context(${on}) textarea:-webkit-autofill,
-:host-context(${on}) select:-webkit-autofill {
-  -webkit-text-fill-color: var(--umb-text) !important;
-  caret-color: var(--umb-text) !important;
-  box-shadow: 0 0 0 1000px var(--umb-bg2) inset !important;
-  transition: background-color 999999s ease-out 0s !important;
 }
 `;
   }
@@ -311,25 +211,120 @@ ${invertCanvas ? `
   }
 
   function isLightBackground(bgRgb) {
-    return relativeLuminance(bgRgb) > 0.62;
+    // Phase 4 v2: Threshold 0.45 balances coverage and precision
+    // Pure white is 1.0, light gray is ~0.7, medium is ~0.4, dark gray is ~0.2
+    // This catches white and light backgrounds while avoiding medium grays
+    return relativeLuminance(bgRgb) > 0.45;
   }
 
   function isSurfaceLike(el, computed) {
     const cs = computed || getComputedStyle(el);
+
+    // Check surface characteristics: rounded corners, borders, shadows
     const br = parseFloat(cs.borderRadius) || 0;
     const bw = parseFloat(cs.borderTopWidth) || 0;
     const shadow = String(cs.boxShadow || "").trim();
-    return br > 0 || bw > 0 || (shadow && shadow !== "none");
+    if (br > 0 || bw > 0 || (shadow && shadow !== "none")) return true;
+
+    // Check for common card/panel class names and data attributes
+    const classList = String(el.className || "");
+    const tag = el.tagName?.toLowerCase() || "";
+
+    // Expanded pattern to catch more modern component classes
+    if (/\b(card|panel|widget|box|surface|tile|chip|alert|badge|callout|container|dropdown|menu|cscore|score|module|item|entry|post|article|section|wrapper|block)\b/i.test(classList)) {
+      return true;
+    }
+
+    // Check for semantic article/section tags with backgrounds
+    if ((tag === "article" || tag === "section" || tag === "aside" || tag === "nav") && el.childElementCount > 0) {
+      return true;
+    }
+
+    // Check for padding that suggests a contained surface (more lenient threshold)
+    const pd = parseFloat(cs.paddingTop) || parseFloat(cs.paddingBottom) || parseFloat(cs.paddingLeft) || parseFloat(cs.paddingRight) || 0;
+    if (pd > 8) return true;
+
+    // Check for elements with explicit dimensions (likely intentional surfaces)
+    const width = parseFloat(cs.width) || 0;
+    const height = parseFloat(cs.height) || 0;
+    if (width > 100 && height > 50) return true;
+
+    return false;
   }
 
-  function fixContrastInRoot(rootNode, intense) {
+  function hasParentWithDarkBackground(el, win) {
+    // Check if any ancestor has a dark background
+    // If so, this light background element should be darkened to maintain contrast
+    let parent = el.parentElement;
+    while (parent && parent !== document.documentElement) {
+      const cs = win.getComputedStyle(parent);
+      const bg = parseCssColor(cs.backgroundColor);
+      if (bg && bg.a > 0.5) {
+        const lum = relativeLuminance(bg);
+        if (lum < 0.3) return true; // Parent is dark
+      }
+      parent = parent.parentElement;
+    }
+    return false;
+  }
+
+  function hasExplicitLightBackground(el) {
+    // Check if element has an explicit white/light background set via inline style
+    const inlineStyle = el.style?.backgroundColor;
+    if (!inlineStyle) return false;
+
+    const lower = inlineStyle.toLowerCase().replace(/\s/g, "");
+
+    // Check for named colors
+    if (lower === "white" || lower === "whitesmoke" || lower === "snow" || lower === "ivory") return true;
+
+    // Check for hex values (white and near-white)
+    if (lower === "#fff" || lower === "#ffffff" || lower === "#fefefe" || lower === "#fafafa" || lower === "#f5f5f5") return true;
+
+    // Check for rgb/rgba white and near-white
+    if (lower.startsWith("rgb(255,255,255") || lower.startsWith("rgb(254,254,254") || lower.startsWith("rgb(250,250,250")) return true;
+    if (lower.startsWith("rgba(255,255,255") || lower.startsWith("rgba(254,254,254") || lower.startsWith("rgba(250,250,250")) return true;
+
+    return false;
+  }
+
+  function fixNestedLightBackgrounds(el, win, cs) {
+    // Recursively check children for light backgrounds that should also be darkened
+    const children = el.children;
+    if (!children || children.length === 0) return;
+
+    for (const child of children) {
+      if (shouldSkipTextElement(child)) continue;
+
+      const childCs = win.getComputedStyle(child);
+      const childBg = parseCssColor(childCs.backgroundColor);
+
+      if (childBg && childBg.a > 0.01) {
+        const childBgRgb = { r: childBg.r, g: childBg.g, b: childBg.b };
+        const childLum = relativeLuminance(childBgRgb);
+        const isPureWhite = childLum > 0.9;
+        const isLight = isLightBackground(childBgRgb);
+
+        // Fix nested light backgrounds (be aggressive for nested content)
+        if (isPureWhite || isLight) {
+          const surface = isSurfaceLike(child, childCs) || elementHasText(child) || child.matches?.("button, input, textarea, select");
+          child.setAttribute(FIX_ATTR_BG, surface ? "2" : "1");
+          // Recurse into this child
+          fixNestedLightBackgrounds(child, win, childCs);
+        }
+      }
+    }
+  }
+
+  function fixContrastInRoot(rootNode) {
     const scope = rootNode instanceof ShadowRoot ? rootNode : rootNode?.documentElement ?? rootNode;
     if (!scope) return;
 
     const win = (rootNode instanceof ShadowRoot ? rootNode.host?.ownerDocument?.defaultView : rootNode?.defaultView) ?? window;
     const elementsToCheck = new Set();
 
-    const walker = (rootNode instanceof ShadowRoot ? rootNode.ownerDocument : document).createTreeWalker(
+    const doc = rootNode instanceof ShadowRoot ? rootNode.ownerDocument || document : (rootNode?.ownerDocument || document);
+    const walker = doc.createTreeWalker(
       scope,
       NodeFilter.SHOW_TEXT,
       {
@@ -344,6 +339,9 @@ ${invertCanvas ? `
       if (p) elementsToCheck.add(p);
     }
 
+    // Phase 4: Lower contrast threshold from 4.0 to 3.0 for more aggressive fixes
+    const CONTRAST_THRESHOLD = 3.0;
+
     for (const el of elementsToCheck) {
       if (shouldSkipTextElement(el)) continue;
 
@@ -355,11 +353,10 @@ ${invertCanvas ? `
       if (!fg) continue;
 
       const bg = getEffectiveBackgroundRgb(el, cs);
-      if (!intense) {
-        const ratio = contrastRatio({ r: fg.r, g: fg.g, b: fg.b }, bg);
-        // Only intervene when contrast is poor.
-        if (ratio >= 4.0) continue;
-      }
+      const ratio = contrastRatio({ r: fg.r, g: fg.g, b: fg.b }, bg);
+
+      // Only intervene when contrast is poor.
+      if (ratio >= CONTRAST_THRESHOLD) continue;
 
       const isLink = el.tagName === "A" || el.closest?.("a");
       if (isLink) {
@@ -369,26 +366,59 @@ ${invertCanvas ? `
       }
     }
 
-    // Background pass: only darken elements that actually paint light backgrounds.
-    const maxElements = intense ? 4000 : 2500;
+    // Background pass: darken elements that have light backgrounds.
+    // Phase 4 v2: No element limit - scan all elements for comprehensive coverage
     let seen = 0;
-    const ew = (rootNode instanceof ShadowRoot ? rootNode : document).createTreeWalker(scope, NodeFilter.SHOW_ELEMENT);
+    let fixed = 0;
+    let skipped = 0;
+    const ew = doc.createTreeWalker(scope, NodeFilter.SHOW_ELEMENT);
     for (let el = ew.currentNode; el; el = ew.nextNode()) {
-      if (++seen > maxElements) break;
+      seen++;
       if (shouldSkipTextElement(el)) continue;
 
       const cs = win.getComputedStyle(el);
-      if (cs.display === "none" || cs.visibility === "hidden" || Number(cs.opacity) === 0) continue;
+      // Skip truly hidden elements but allow display:none elements that might become visible
+      if (cs.visibility === "hidden" || Number(cs.opacity) === 0) continue;
 
       const bg = parseCssColor(cs.backgroundColor);
       if (!bg || bg.a <= 0.01) continue;
 
       const bgRgb = { r: bg.r, g: bg.g, b: bg.b };
-      if (!intense && !isLightBackground(bgRgb)) continue;
+      const lum = relativeLuminance(bgRgb);
+      const hasExplicitWhite = hasExplicitLightBackground(el);
+      const isPureWhite = lum > 0.9; // Pure white or near-white
+      const isLight = isLightBackground(bgRgb); // Uses 0.45 threshold
+      const surface = isSurfaceLike(el, cs);
 
-      // Prefer bg2 for card-like surfaces, bg for flat containers.
-      const surface = isSurfaceLike(el, cs) || elementHasText(el) || el.matches?.("button, input, textarea, select");
-      el.setAttribute(FIX_ATTR_BG, surface ? "2" : "1");
+      // Phase 4 v2: More aggressive fixing strategy
+      if (hasExplicitWhite || isPureWhite || isLight) {
+        // Always fix if:
+        // 1. Pure white (>0.9 luminance) - these are always intentional light backgrounds
+        // 2. Explicit white via inline styles
+        // 3. Surface-like (cards, panels, etc) with any light background
+        // 4. Has text content and is light
+        const shouldAlwaysFix = isPureWhite || hasExplicitWhite || surface || elementHasText(el);
+
+        // Only skip if it's a light (but not pure white) non-surface element with dark parent
+        // This preserves intentional light accents on dark backgrounds
+        if (!shouldAlwaysFix && hasParentWithDarkBackground(el, win)) {
+          skipped++;
+          continue;
+        }
+
+        // Prefer bg2 for card-like surfaces and interactive elements, bg for flat containers
+        const useBg2 = surface || elementHasText(el) || el.matches?.("button, input, textarea, select");
+        el.setAttribute(FIX_ATTR_BG, useBg2 ? "2" : "1");
+        fixed++;
+
+        // Phase 4 v2: Recursively fix nested light backgrounds
+        fixNestedLightBackgrounds(el, win, cs);
+      }
+    }
+
+    // Debug logging (Phase 4 v2) - temporary for testing
+    if (fixed > 0 || skipped > 0) {
+      console.log(`[Umbreon] Background pass: ${fixed} fixed, ${skipped} skipped, ${seen} scanned`);
     }
   }
 
@@ -399,16 +429,45 @@ ${invertCanvas ? `
       fixScheduled = false;
       if (document.documentElement.getAttribute(UMB_ATTR) !== "on") return;
       try {
-        fixContrastInRoot(document, intenseMode);
+        fixContrastInRoot(document);
         // Also fix any existing open shadow roots.
         const nodes = document.querySelectorAll("*");
         for (const el of nodes) {
-          if (el.shadowRoot) fixContrastInRoot(el.shadowRoot, intenseMode);
+          if (el.shadowRoot) fixContrastInRoot(el.shadowRoot);
         }
       } catch {
         // ignore
       }
     }, 50);
+  }
+
+  // Phase 4: Multiple contrast fix passes for late-loading content
+  let fixPassTimeouts = [];
+
+  function scheduleMultipleFixPasses() {
+    // Clear any pending passes
+    for (const t of fixPassTimeouts) {
+      clearTimeout(t);
+    }
+    fixPassTimeouts = [];
+
+    // Schedule multiple passes: immediate, 500ms, 1000ms, 2000ms
+    const delays = [0, 500, 1000, 2000];
+    for (const delay of delays) {
+      const t = setTimeout(() => {
+        if (document.documentElement.getAttribute(UMB_ATTR) !== "on") return;
+        try {
+          fixContrastInRoot(document);
+          const nodes = document.querySelectorAll("*");
+          for (const el of nodes) {
+            if (el.shadowRoot) fixContrastInRoot(el.shadowRoot);
+          }
+        } catch {
+          // ignore
+        }
+      }, delay);
+      fixPassTimeouts.push(t);
+    }
   }
 
   function injectShadowStyles(startNode) {
@@ -421,7 +480,7 @@ ${invertCanvas ? `
       if (node instanceof ShadowRoot) {
         const styleEl = ensureStyleElInRoot(node, SHADOW_STYLE_ID);
         if (styleEl) styleEl.textContent = shadowCss();
-        fixContrastInRoot(node, intenseMode);
+        fixContrastInRoot(node);
       }
 
       const walker = document.createTreeWalker(node, NodeFilter.SHOW_ELEMENT);
@@ -443,7 +502,7 @@ ${invertCanvas ? `
       const root = original.apply(this, args);
       try {
         injectShadowStyles(root);
-        fixContrastInRoot(root, intenseMode);
+        fixContrastInRoot(root);
       } catch {
         // ignore
       }
@@ -494,19 +553,35 @@ ${invertCanvas ? `
         return `:root[${UMB_ATTR}="on"]{--umb-bg:#0b1220;--umb-bg2:#101a2e;--umb-text:#e9eefc;--umb-muted:#b7c2dd;--umb-link:#7dd3fc;--umb-border:#1f2a44;--umb-shadow:rgba(0,0,0,.4);}`;
       case "sepia":
         return `:root[${UMB_ATTR}="on"]{--umb-bg:#14110d;--umb-bg2:#1b160f;--umb-text:#f0e6d6;--umb-muted:#d0c1aa;--umb-link:#f6c177;--umb-border:#2a2318;--umb-shadow:rgba(0,0,0,.35);}`;
+      case "nord":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#2e3440;--umb-bg2:#3b4252;--umb-text:#eceff4;--umb-muted:#d8dee9;--umb-link:#88c0d0;--umb-border:#434c5e;--umb-shadow:rgba(0,0,0,.3);}`;
+      case "dracula":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#282a36;--umb-bg2:#343746;--umb-text:#f8f8f2;--umb-muted:#bfbfbf;--umb-link:#bd93f9;--umb-border:#44475a;--umb-shadow:rgba(0,0,0,.4);}`;
+      case "solarized":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#002b36;--umb-bg2:#073642;--umb-text:#fdf6e3;--umb-muted:#93a1a1;--umb-link:#268bd2;--umb-border:#073642;--umb-shadow:rgba(0,0,0,.35);}`;
+      case "monokai":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#272822;--umb-bg2:#3e3d32;--umb-text:#f8f8f2;--umb-muted:#a59f85;--umb-link:#66d9ef;--umb-border:#49483e;--umb-shadow:rgba(0,0,0,.4);}`;
+      case "gruvbox":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#1d2021;--umb-bg2:#282828;--umb-text:#ebdbb2;--umb-muted:#bdae93;--umb-link:#83a598;--umb-border:#3c3836;--umb-shadow:rgba(0,0,0,.4);}`;
+      case "tokyo-night":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#1a1b26;--umb-bg2:#24283b;--umb-text:#c0caf5;--umb-muted:#9aa5ce;--umb-link:#7aa2f7;--umb-border:#414868;--umb-shadow:rgba(0,0,0,.35);}`;
       case "classic":
       default:
         return `:root[${UMB_ATTR}="on"]{--umb-bg:#0f1115;--umb-bg2:#141821;--umb-text:#e6eaf2;--umb-muted:#aeb8cc;--umb-link:#8ab4f8;--umb-border:#2a3140;--umb-shadow:rgba(0,0,0,.35);}`;
     }
   }
 
-  function apply(enabled, themeId, nextIntenseMode) {
+  function apply(enabled, themeId) {
     const root = document.documentElement;
-    intenseMode = !!nextIntenseMode;
+
+    // Clear any pending fix passes
+    for (const t of fixPassTimeouts) {
+      clearTimeout(t);
+    }
+    fixPassTimeouts = [];
 
     if (!enabled) {
       root.removeAttribute(UMB_ATTR);
-      root.removeAttribute(INTENSE_ATTR);
       const base = document.getElementById(STYLE_ID);
       const theme = document.getElementById(THEME_ID);
       if (base) base.remove();
@@ -532,10 +607,8 @@ ${invertCanvas ? `
     }
 
     root.setAttribute(UMB_ATTR, "on");
-    if (intenseMode) root.setAttribute(INTENSE_ATTR, "on");
-    else root.removeAttribute(INTENSE_ATTR);
 
-    // Reset previous fix passes so toggling Intense Mode can take effect.
+    // Reset previous fix passes so re-application works correctly.
     clearFixAttributesInRoot(document);
     try {
       const nodes = document.querySelectorAll("*");
@@ -556,14 +629,14 @@ ${invertCanvas ? `
     ensureAttachShadowPatched();
     injectShadowStyles(document.documentElement);
 
-    // Fix low-contrast text while preserving intentional colors.
-    scheduleFixAllText();
+    // Phase 4: Schedule multiple fix passes for late-loading content
+    scheduleMultipleFixPasses();
     startMutationObserver();
   }
 
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (!msg || msg.type !== MessageType.APPLY) return;
-    apply(!!msg.enabled, msg.themeId || "classic", !!msg.intenseMode);
+    apply(!!msg.enabled, msg.themeId || "classic");
     sendResponse?.({ ok: true });
     return true;
   });

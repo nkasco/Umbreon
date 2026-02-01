@@ -6,6 +6,21 @@ export function safeParseUrl(rawUrl) {
   }
 }
 
+/**
+ * Check if a URL's hostname matches a rule domain (including subdomains).
+ * @param {string} ruleDomain - The domain from the rule (e.g., "espn.com")
+ * @param {string} urlDomain - The hostname from the URL (e.g., "www.espn.com")
+ * @returns {boolean}
+ */
+function domainMatches(ruleDomain, urlDomain) {
+  const rule = ruleDomain.toLowerCase();
+  const target = urlDomain.toLowerCase();
+  // Exact match
+  if (rule === target) return true;
+  // Subdomain match: target ends with ".rule"
+  return target.endsWith('.' + rule);
+}
+
 export function getOrigin(rawUrl) {
   const url = safeParseUrl(rawUrl);
   return url ? url.origin : null;
@@ -45,5 +60,14 @@ export function ruleMatchesUrl(ruleValue, rawUrl) {
   if (ruleValue === url.origin) return true;
 
   // Prefix match against full href
-  return url.href.startsWith(ruleValue);
+  if (url.href.startsWith(ruleValue)) return true;
+
+  // Domain matching (handles subdomains)
+  // Parse the rule as a URL to extract its hostname
+  const ruleUrl = safeParseUrl(ruleValue);
+  if (ruleUrl && domainMatches(ruleUrl.hostname, url.hostname)) {
+    return true;
+  }
+
+  return false;
 }

@@ -9,10 +9,11 @@ async function getActiveTab() {
 
 function setDisabled(disabled) {
   document.getElementById("toggleBtn").disabled = disabled;
-  document.getElementById("disableSite").disabled = disabled;
-  document.getElementById("disablePage").disabled = disabled;
-  document.getElementById("themeSelect").disabled = disabled;
-  document.getElementById("intenseMode").disabled = disabled;
+  document.getElementById("autoEnableSite").disabled = disabled;
+  const swatches = document.querySelectorAll(".theme-swatch");
+  for (const swatch of swatches) {
+    swatch.disabled = disabled;
+  }
 }
 
 async function refresh() {
@@ -43,13 +44,44 @@ async function refresh() {
 
   setDisabled(false);
 
-  document.getElementById("themeSelect").value = state.themeId || "classic";
-  document.getElementById("disableSite").checked = !!state.disabledByOrigin;
-  document.getElementById("disablePage").checked = !!state.disabledByPage;
-  document.getElementById("intenseMode").checked = !!state.intenseMode;
+  // Update theme picker selection
+  const currentTheme = state.themeId || "classic";
+  const swatches = document.querySelectorAll(".theme-swatch");
+  for (const swatch of swatches) {
+    if (swatch.dataset.theme === currentTheme) {
+      swatch.classList.add("selected");
+    } else {
+      swatch.classList.remove("selected");
+    }
+  }
 
-  document.getElementById("statusHint").textContent = state.enabled ? "Enabled" : "Disabled";
+  // Update status hint to show if it's auto-enabled or manual
+  let statusText = state.enabled ? "Enabled" : "Disabled";
+  if (state.enabled) {
+    if (state.autoActivateMatch) {
+      statusText += " (Auto)";
+    } else if (state.nightlightEnabled && state.hasAllSites) {
+      statusText += " (Nightlight)";
+    } else {
+      statusText += " (Manual)";
+    }
+  }
+  document.getElementById("statusHint").textContent = statusText;
   document.getElementById("toggleBtn").textContent = state.enabled ? "Turn off" : "Turn on";
+
+  // Auto-enable button state
+  const autoEnableBtn = document.getElementById("autoEnableSite");
+  const autoEnableHint = document.getElementById("autoEnableHint");
+
+  if (state.autoActivateMatch) {
+    autoEnableBtn.textContent = "Remove from auto-enable";
+    autoEnableBtn.dataset.action = "remove";
+    autoEnableHint.textContent = "This site will auto-enable dark mode.";
+  } else {
+    autoEnableBtn.textContent = "Always enable on this site";
+    autoEnableBtn.dataset.action = "add";
+    autoEnableHint.textContent = "";
+  }
 
   const permHint = document.getElementById("permHint");
   if (state.nightlightEnabled && !state.hasAllSites) {
@@ -76,64 +108,64 @@ document.getElementById("toggleBtn").addEventListener("click", async () => {
   await refresh();
 });
 
-document.getElementById("disableSite").addEventListener("change", async (e) => {
-  const tab = await getActiveTab();
-  if (!tab?.url) return;
+// Theme swatch click handlers
+document.querySelectorAll(".theme-swatch").forEach((swatch) => {
+  swatch.addEventListener("click", async () => {
+    const themeId = swatch.dataset.theme;
+    const tab = await getActiveTab();
 
-  await chrome.runtime.sendMessage({
-    type: MessageType.SET_DISABLE_RULE,
-    scope: "origin",
-    url: tab.url,
-    disabled: e.target.checked
+    await chrome.runtime.sendMessage({
+      type: MessageType.SET_THEME,
+      themeId,
+      tabId: tab?.id,
+      url: tab?.url
+    });
+
+    applyUiTheme(themeId);
+    await refresh();
   });
-
-  await refresh();
-});
-
-document.getElementById("disablePage").addEventListener("change", async (e) => {
-  const tab = await getActiveTab();
-  if (!tab?.url) return;
-
-  await chrome.runtime.sendMessage({
-    type: MessageType.SET_DISABLE_RULE,
-    scope: "page",
-    url: tab.url,
-    disabled: e.target.checked
-  });
-
-  await refresh();
-});
-
-document.getElementById("themeSelect").addEventListener("change", async (e) => {
-  const tab = await getActiveTab();
-  await chrome.runtime.sendMessage({
-    type: MessageType.SET_THEME,
-    themeId: e.target.value,
-    tabId: tab?.id,
-    url: tab?.url
-  });
-
-  applyUiTheme(e.target.value);
-
-  await refresh();
-});
-
-document.getElementById("intenseMode").addEventListener("change", async (e) => {
-  const tab = await getActiveTab();
-  await chrome.runtime.sendMessage({
-    type: MessageType.SET_INTENSE_MODE,
-    intenseMode: e.target.checked,
-    tabId: tab?.id,
-    url: tab?.url
-  });
-
-  await refresh();
 });
 
 document.getElementById("openOptions").addEventListener("click", async () => {
   if (chrome.runtime.openOptionsPage) {
     await chrome.runtime.openOptionsPage();
   }
+});
+
+document.getElementById("autoEnableSite").addEventListener("click", async () => {
+  const tab = await getActiveTab();
+  if (!tab?.id || !tab?.url) return;
+
+  const origin = getOrigin(tab.url);
+  if (!origin) return;
+
+  const btn = document.getElementById("autoEnableSite");
+
+  if (btn.dataset.action === "add") {
+    // Request <all_urls> permission if not already granted
+    const granted = await chrome.permissions.request({ origins: ["<all_urls>"] });
+    if (!granted) return;
+
+    await chrome.runtime.sendMessage({
+      type: MessageType.ADD_AUTOACTIVATE,
+      rule: origin
+    });
+
+    // Also enable dark mode on the current tab immediately
+    await chrome.runtime.sendMessage({
+      type: MessageType.SET_TAB_OVERRIDE,
+      tabId: tab.id,
+      url: tab.url,
+      enabled: true
+    });
+  } else {
+    await chrome.runtime.sendMessage({
+      type: MessageType.REMOVE_AUTOACTIVATE,
+      rule: origin
+    });
+  }
+
+  await refresh();
 });
 
 refresh();

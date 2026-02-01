@@ -7,10 +7,26 @@ async function load() {
   if (!res?.ok) return;
 
   const { settings, hasAllSites } = res;
-  applyUiTheme(settings.themeId || "classic");
-  document.getElementById("nightlight").checked = !!settings.nightlightEnabled;
-  document.getElementById("theme").value = settings.themeId || "classic";
-  document.getElementById("intenseMode").checked = !!settings.intenseMode;
+  const currentTheme = settings.themeId || "classic";
+  applyUiTheme(currentTheme);
+
+  // Update nightlight toggle button
+  const nightlightToggle = document.getElementById("nightlightToggle");
+  if (settings.nightlightEnabled) {
+    nightlightToggle.classList.add("active");
+  } else {
+    nightlightToggle.classList.remove("active");
+  }
+
+  // Update theme card selection
+  const themeCards = document.querySelectorAll(".theme-card");
+  for (const card of themeCards) {
+    if (card.dataset.theme === currentTheme) {
+      card.classList.add("selected");
+    } else {
+      card.classList.remove("selected");
+    }
+  }
 
   renderRules(settings.autoActivateRules || []);
   renderNightlightHint(!!settings.nightlightEnabled, !!hasAllSites);
@@ -57,14 +73,15 @@ async function refresh() {
   await load();
 }
 
-document.getElementById("nightlight").addEventListener("change", async (e) => {
-  const enabled = e.target.checked;
+document.getElementById("nightlightToggle").addEventListener("click", async (e) => {
+  const toggleBtn = e.currentTarget;
+  const currentlyEnabled = toggleBtn.classList.contains("active");
+  const enabled = !currentlyEnabled;
 
   if (enabled) {
     // Request optional host permission for Nightlight.
     const granted = await chrome.permissions.request({ origins: ["<all_urls>"] });
     if (!granted) {
-      e.target.checked = false;
       await chrome.runtime.sendMessage({ type: MessageType.SET_NIGHTLIGHT, nightlightEnabled: false });
       await refresh();
       return;
@@ -75,18 +92,14 @@ document.getElementById("nightlight").addEventListener("change", async (e) => {
   await refresh();
 });
 
-document.getElementById("theme").addEventListener("change", async (e) => {
-  const themeId = e.target.value;
-  await chrome.runtime.sendMessage({ type: MessageType.SET_THEME, themeId });
-  applyUiTheme(themeId);
-});
-
-document.getElementById("intenseMode").addEventListener("change", async (e) => {
-  await chrome.runtime.sendMessage({
-    type: MessageType.SET_INTENSE_MODE,
-    intenseMode: e.target.checked
+// Theme card click handlers
+document.querySelectorAll(".theme-card").forEach((card) => {
+  card.addEventListener("click", async () => {
+    const themeId = card.dataset.theme;
+    await chrome.runtime.sendMessage({ type: MessageType.SET_THEME, themeId });
+    applyUiTheme(themeId);
+    await refresh();
   });
-  await refresh();
 });
 
 document.getElementById("addRule").addEventListener("click", async () => {
