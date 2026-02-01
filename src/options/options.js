@@ -9,7 +9,14 @@ async function load() {
   const { settings, hasAllSites } = res;
   const currentTheme = settings.themeId || "classic";
   applyUiTheme(currentTheme);
-  document.getElementById("nightlight").checked = !!settings.nightlightEnabled;
+
+  // Update nightlight toggle button
+  const nightlightToggle = document.getElementById("nightlightToggle");
+  if (settings.nightlightEnabled) {
+    nightlightToggle.classList.add("active");
+  } else {
+    nightlightToggle.classList.remove("active");
+  }
 
   // Update theme card selection
   const themeCards = document.querySelectorAll(".theme-card");
@@ -66,14 +73,15 @@ async function refresh() {
   await load();
 }
 
-document.getElementById("nightlight").addEventListener("change", async (e) => {
-  const enabled = e.target.checked;
+document.getElementById("nightlightToggle").addEventListener("click", async (e) => {
+  const toggleBtn = e.currentTarget;
+  const currentlyEnabled = toggleBtn.classList.contains("active");
+  const enabled = !currentlyEnabled;
 
   if (enabled) {
     // Request optional host permission for Nightlight.
     const granted = await chrome.permissions.request({ origins: ["<all_urls>"] });
     if (!granted) {
-      e.target.checked = false;
       await chrome.runtime.sendMessage({ type: MessageType.SET_NIGHTLIGHT, nightlightEnabled: false });
       await refresh();
       return;

@@ -561,6 +561,10 @@ ${on} canvas {
         return `:root[${UMB_ATTR}="on"]{--umb-bg:#002b36;--umb-bg2:#073642;--umb-text:#fdf6e3;--umb-muted:#93a1a1;--umb-link:#268bd2;--umb-border:#073642;--umb-shadow:rgba(0,0,0,.35);}`;
       case "monokai":
         return `:root[${UMB_ATTR}="on"]{--umb-bg:#272822;--umb-bg2:#3e3d32;--umb-text:#f8f8f2;--umb-muted:#a59f85;--umb-link:#66d9ef;--umb-border:#49483e;--umb-shadow:rgba(0,0,0,.4);}`;
+      case "gruvbox":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#1d2021;--umb-bg2:#282828;--umb-text:#ebdbb2;--umb-muted:#bdae93;--umb-link:#83a598;--umb-border:#3c3836;--umb-shadow:rgba(0,0,0,.4);}`;
+      case "tokyo-night":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#1a1b26;--umb-bg2:#24283b;--umb-text:#c0caf5;--umb-muted:#9aa5ce;--umb-link:#7aa2f7;--umb-border:#414868;--umb-shadow:rgba(0,0,0,.35);}`;
       case "classic":
       default:
         return `:root[${UMB_ATTR}="on"]{--umb-bg:#0f1115;--umb-bg2:#141821;--umb-text:#e6eaf2;--umb-muted:#aeb8cc;--umb-link:#8ab4f8;--umb-border:#2a3140;--umb-shadow:rgba(0,0,0,.35);}`;

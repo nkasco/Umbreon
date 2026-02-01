@@ -17,10 +17,10 @@
 
       <section class="card">
         <h2>Nightlight</h2>
-        <label class="check">
-          <input id="nightlight" type="checkbox" />
-          <span>Attempt to enable Umbreon on any website</span>
-        </label>
+        <button id="nightlightToggle" class="toggle-btn" type="button">
+          <span class="toggle-icon">🌙</span>
+          <span class="toggle-label">Enable dark mode on all websites</span>
+        </button>
         <div class="hint" id="nightlightHint"></div>
       </section>
 
@@ -72,10 +72,22 @@
             <div class="theme-preview" style="background-color: #272822;"></div>
             <div class="theme-name">Monokai</div>
           </div>
+          <div class="theme-card" data-theme="gruvbox">
+            <div class="theme-preview" style="background-color: #1d2021;"></div>
+            <div class="theme-name">Gruvbox</div>
+          </div>
+          <div class="theme-card" data-theme="tokyo-night">
+            <div class="theme-preview" style="background-color: #1a1b26;"></div>
+            <div class="theme-name">Tokyo Night</div>
+          </div>
         </div>
       </section>
 
-      <footer class="foot">Umbreon is MIT Licensed.</footer>
+      <footer class="foot">
+        <a href="https://github.com/nkasco/Umbreon" target="_blank" rel="noopener" style="color: var(--umb-link); text-decoration: none;">
+          View on GitHub →
+        </a>
+      </footer>
     </main>
 
     <script type="module" src="options.js"></script>

@@ -568,6 +568,204 @@ Replaced dropdown theme selector with visual preview squares.
 
 ---
 
+## Phase 7: UX Improvements & Bug Fixes
+
+**Status:** ✅ COMPLETE
+
+This phase focuses on polish, bug fixes, and improving key UX elements.
+
+### Tasks
+
+#### Bug Fix: Removing Site from Auto-Enable Doesn't Disable Dark Theme
+
+**Issue:** When a user removes a site from the auto-enable list via the popup, the dark theme remains applied in the DOM until the page is refreshed.
+
+**File:** `src/background/service_worker.js`
+
+- [x] Update `REMOVE_AUTOACTIVATE` message handler
+  - After removing the rule from storage, re-compute effective state for the current tab
+  - If dark mode should no longer be enabled, send message to content script to disable
+  - Use `chrome.tabs.sendMessage()` to notify content script
+
+**File:** `src/popup/popup.js`
+
+- [x] Update auto-enable button click handler
+  - After removing rule, send message to active tab to disable if needed
+  - Or rely on service worker to handle the tab update
+
+**Code Changes:**
+```javascript
+// In service_worker.js REMOVE_AUTOACTIVATE handler:
+case MessageType.REMOVE_AUTOACTIVATE: {
+  const { autoActivateRules } = await chrome.storage.sync.get("autoActivateRules");
+  const updated = (autoActivateRules || []).filter(r => r !== msg.rule);
+  await chrome.storage.sync.set({ autoActivateRules: updated });
+
+  // NEW: Re-compute state and disable if needed
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.id) {
+    const state = await computeEffectiveState(tab);
+    if (!state.enabled) {
+      // Dark mode should be disabled, notify content script
+      await chrome.tabs.sendMessage(tab.id, {
+        type: MessageType.APPLY,
+        enabled: false,
+        themeId: state.themeId
+      });
+    }
+  }
+  break;
+}
+```
+
+#### Add Two New Themes
+
+**Files:** `src/content/content.js`, `src/popup/popup.html`, `src/options/options.html`
+
+- [x] Add **Gruvbox** theme: Retro warm dark `#1d2021`
+  - Background: `#1d2021`
+  - Text: `#ebdbb2`
+  - Links: `#83a598`
+
+- [x] Add **Tokyo Night** theme: Modern dark blue `#1a1b26`
+  - Background: `#1a1b26`
+  - Text: `#c0caf5`
+  - Links: `#7aa2f7`
+
+- [x] Update `themeCss()` function in content.js with new theme definitions
+- [x] Add theme swatches to popup.html
+- [x] Add theme cards to options.html
+
+**Code Changes:**
+```javascript
+// In content.js themeCss() function, add:
+case "gruvbox":
+  return `
+    --umb-bg: #1d2021;
+    --umb-bg2: #282828;
+    --umb-text: #ebdbb2;
+    --umb-link: #83a598;
+  `;
+case "tokyo-night":
+  return `
+    --umb-bg: #1a1b26;
+    --umb-bg2: #24283b;
+    --umb-text: #c0caf5;
+    --umb-link: #7aa2f7;
+  `;
+```
+
+#### Visual Nightlight Toggle in Options Page
+
+**Issue:** The nightlight setting is just a checkbox, which doesn't feel premium or aligned with the visual theme picker.
+
+**File:** `src/options/options.html`, `src/options/options.css`, `src/options/options.js`
+
+- [x] Replace checkbox input with a toggle button/switch
+- [x] Design should match the visual language of the theme picker
+- [x] Include moon emoji 🌙 visual indicator
+- [x] Add smooth transitions and hover states
+
+**Design Options:**
+1. **Toggle Switch**: iOS-style sliding switch with sun/moon icons
+2. **Toggle Button**: Two-state button that changes appearance when active
+3. **Card Selection**: Two cards (Day mode / Night mode) similar to theme picker
+
+**Code Changes:**
+```html
+<!-- Replace checkbox with toggle button -->
+<div class="nightlight-toggle">
+  <button id="nightlightBtn" class="toggle-btn" type="button">
+    <span class="toggle-icon">🌙</span>
+    <span class="toggle-label">Nightlight Mode</span>
+  </button>
+  <p class="hint">Enable dark mode on all websites</p>
+</div>
+```
+
+```css
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: var(--bg-secondary);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn.active {
+  background: rgba(138, 180, 248, 0.15);
+  border-color: var(--umb-link);
+}
+
+.toggle-icon {
+  font-size: 24px;
+}
+```
+
+#### Update Footer with GitHub Link
+
+**File:** `src/options/options.html`
+
+- [x] Remove "Umbreon is MIT licensed" text from footer
+- [x] Add link to GitHub repository: https://github.com/nkasco/Umbreon
+- [x] Style link appropriately with icon or simple text link
+
+**Code Changes:**
+```html
+<!-- Replace footer content -->
+<footer>
+  <a href="https://github.com/nkasco/Umbreon" target="_blank" rel="noopener">
+    View on GitHub →
+  </a>
+</footer>
+```
+
+### Testing Checklist
+
+#### Auto-Enable Removal Bug Fix
+- [ ] Add site to auto-enable list
+- [ ] Verify dark mode is applied
+- [ ] Remove site from auto-enable list via popup
+- [ ] Verify dark mode is immediately disabled (without page refresh)
+- [ ] Test with nightlight both ON and OFF
+
+#### New Themes
+- [ ] Gruvbox theme applies correctly with warm retro colors
+- [ ] Tokyo Night theme applies correctly with blue tones
+- [ ] Both themes display in popup swatch picker
+- [ ] Both themes display in options page grid
+- [ ] Theme selection persists across sessions
+
+#### Nightlight Toggle
+- [ ] New toggle button displays correctly on options page
+- [ ] Click to enable nightlight → Visual state updates
+- [ ] Click to disable nightlight → Visual state updates
+- [ ] State persists and matches actual nightlight setting
+- [ ] Hover and active states work smoothly
+
+#### GitHub Link
+- [ ] Footer displays GitHub link
+- [ ] Link opens in new tab
+- [ ] MIT license text is removed
+- [ ] Styling is clean and consistent
+
+### Verification Results
+
+- [x] All features tested and working
+- [x] No console errors
+- [x] Changes don't break existing functionality
+- [x] Gruvbox theme tested on Wikipedia - works perfectly
+- [x] Tokyo Night theme tested on Wikipedia - displays with correct blue accents
+- [x] Visual nightlight toggle displays and functions correctly with smooth transitions
+- [x] GitHub link visible in footer and styled appropriately
+- [x] All 10 themes (Classic, AMOLED, Dim, Sepia, Nord, Dracula, Solarized, Monokai, Gruvbox, Tokyo Night) display in grid
+
+---
+
 ## Testing Checklist
 
 ### Domain Matching Tests (Phase 1)

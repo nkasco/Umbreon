@@ -171,6 +171,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const rule = String(msg.rule || "").trim();
       const next = settings.autoActivateRules.filter((r) => r !== rule);
       await setSettings({ autoActivateRules: next });
+
+      // Re-compute state for the current tab and disable if needed
+      const tabId = msg.tabId ?? sender?.tab?.id;
+      const url = msg.url ?? sender?.tab?.url;
+      if (tabId && url && !isRestrictedUrl(url)) {
+        const state = await computeEffectiveState(tabId, url);
+        if (!state.enabled) {
+          // Dark mode should be disabled, notify content script
+          try {
+            await applyToTab(tabId, false, state.themeId);
+          } catch {
+            // ignore: content script may not be loaded yet
+          }
+        }
+      }
+
       sendResponse({ ok: true, autoActivateRules: next });
       return;
     }
