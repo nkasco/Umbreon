@@ -9,10 +9,7 @@ async function getActiveTab() {
 
 function setDisabled(disabled) {
   document.getElementById("toggleBtn").disabled = disabled;
-  document.getElementById("disableSite").disabled = disabled;
-  document.getElementById("disablePage").disabled = disabled;
   document.getElementById("themeSelect").disabled = disabled;
-  document.getElementById("intenseMode").disabled = disabled;
   document.getElementById("autoEnableSite").disabled = disabled;
 }
 
@@ -45,11 +42,19 @@ async function refresh() {
   setDisabled(false);
 
   document.getElementById("themeSelect").value = state.themeId || "classic";
-  document.getElementById("disableSite").checked = !!state.disabledByOrigin;
-  document.getElementById("disablePage").checked = !!state.disabledByPage;
-  document.getElementById("intenseMode").checked = !!state.intenseMode;
 
-  document.getElementById("statusHint").textContent = state.enabled ? "Enabled" : "Disabled";
+  // Update status hint to show if it's auto-enabled or manual
+  let statusText = state.enabled ? "Enabled" : "Disabled";
+  if (state.enabled) {
+    if (state.autoActivateMatch) {
+      statusText += " (Auto)";
+    } else if (state.nightlightEnabled && state.hasAllSites) {
+      statusText += " (Nightlight)";
+    } else {
+      statusText += " (Manual)";
+    }
+  }
+  document.getElementById("statusHint").textContent = statusText;
   document.getElementById("toggleBtn").textContent = state.enabled ? "Turn off" : "Turn on";
 
   // Auto-enable button state
@@ -91,34 +96,6 @@ document.getElementById("toggleBtn").addEventListener("click", async () => {
   await refresh();
 });
 
-document.getElementById("disableSite").addEventListener("change", async (e) => {
-  const tab = await getActiveTab();
-  if (!tab?.url) return;
-
-  await chrome.runtime.sendMessage({
-    type: MessageType.SET_DISABLE_RULE,
-    scope: "origin",
-    url: tab.url,
-    disabled: e.target.checked
-  });
-
-  await refresh();
-});
-
-document.getElementById("disablePage").addEventListener("change", async (e) => {
-  const tab = await getActiveTab();
-  if (!tab?.url) return;
-
-  await chrome.runtime.sendMessage({
-    type: MessageType.SET_DISABLE_RULE,
-    scope: "page",
-    url: tab.url,
-    disabled: e.target.checked
-  });
-
-  await refresh();
-});
-
 document.getElementById("themeSelect").addEventListener("change", async (e) => {
   const tab = await getActiveTab();
   await chrome.runtime.sendMessage({
@@ -129,18 +106,6 @@ document.getElementById("themeSelect").addEventListener("change", async (e) => {
   });
 
   applyUiTheme(e.target.value);
-
-  await refresh();
-});
-
-document.getElementById("intenseMode").addEventListener("change", async (e) => {
-  const tab = await getActiveTab();
-  await chrome.runtime.sendMessage({
-    type: MessageType.SET_INTENSE_MODE,
-    intenseMode: e.target.checked,
-    tabId: tab?.id,
-    url: tab?.url
-  });
 
   await refresh();
 });

@@ -10,7 +10,6 @@ async function load() {
   applyUiTheme(settings.themeId || "classic");
   document.getElementById("nightlight").checked = !!settings.nightlightEnabled;
   document.getElementById("theme").value = settings.themeId || "classic";
-  document.getElementById("intenseMode").checked = !!settings.intenseMode;
 
   renderRules(settings.autoActivateRules || []);
   renderNightlightHint(!!settings.nightlightEnabled, !!hasAllSites);
@@ -79,14 +78,6 @@ document.getElementById("theme").addEventListener("change", async (e) => {
   const themeId = e.target.value;
   await chrome.runtime.sendMessage({ type: MessageType.SET_THEME, themeId });
   applyUiTheme(themeId);
-});
-
-document.getElementById("intenseMode").addEventListener("change", async (e) => {
-  await chrome.runtime.sendMessage({
-    type: MessageType.SET_INTENSE_MODE,
-    intenseMode: e.target.checked
-  });
-  await refresh();
 });
 
 document.getElementById("addRule").addEventListener("click", async () => {

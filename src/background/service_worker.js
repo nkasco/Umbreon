@@ -1,5 +1,5 @@
 import { MessageType } from "../shared/messaging.js";
-import { getPageKey, getOrigin, ruleMatchesUrl } from "../shared/url_match.js";
+import { ruleMatchesUrl } from "../shared/url_match.js";
 import {
   getSettings,
   setSettings,
@@ -25,44 +25,31 @@ function isRestrictedUrl(rawUrl) {
 
 async function computeEffectiveState(tabId, url) {
   const settings = await getSettings();
-  const origin = getOrigin(url);
-  const pageKey = getPageKey(url);
   const tabOverrides = await getTabOverrides();
   const override = tabOverrides?.[String(tabId)]?.enabled;
 
-  const disabledByOrigin = origin ? settings.disableOrigins.includes(origin) : false;
-  const disabledByPage = pageKey ? settings.disablePages.includes(pageKey) : false;
-
   const autoActivateMatch = settings.autoActivateRules.some((rule) => ruleMatchesUrl(rule, url));
 
-  // If the user explicitly toggled this tab, that wins (unless the URL is restricted).
+  // If the user explicitly toggled this tab, that wins.
   if (typeof override === "boolean") {
     return {
-      enabled: override && !disabledByOrigin && !disabledByPage,
-      disabledByOrigin,
-      disabledByPage,
+      enabled: override,
       autoActivateMatch,
       themeId: settings.themeId,
-      nightlightEnabled: settings.nightlightEnabled,
-      intenseMode: settings.intenseMode
+      nightlightEnabled: settings.nightlightEnabled
     };
   }
 
   const canAuto = await hasAllSitesPermission();
 
-  const enabled =
-    !disabledByOrigin &&
-    !disabledByPage &&
-    ((settings.nightlightEnabled && canAuto) || (autoActivateMatch && canAuto));
+  // Enabled if: Nightlight is on OR site is in auto-activate list (both require permission)
+  const enabled = (settings.nightlightEnabled && canAuto) || (autoActivateMatch && canAuto);
 
   return {
     enabled,
-    disabledByOrigin,
-    disabledByPage,
     autoActivateMatch,
     themeId: settings.themeId,
-    nightlightEnabled: settings.nightlightEnabled,
-    intenseMode: settings.intenseMode
+    nightlightEnabled: settings.nightlightEnabled
   };
 }
 
@@ -73,13 +60,12 @@ async function ensureContentScript(tabId) {
   });
 }
 
-async function applyToTab(tabId, enabled, themeId, intenseMode) {
+async function applyToTab(tabId, enabled, themeId) {
   await ensureContentScript(tabId);
   await chrome.tabs.sendMessage(tabId, {
     type: MessageType.APPLY,
     enabled,
-    themeId,
-    intenseMode
+    themeId
   });
 }
 
@@ -96,7 +82,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
   // Auto-apply only if we have permission; computeEffectiveState already checks.
   try {
-    await applyToTab(tabId, true, state.themeId, state.intenseMode);
+    await applyToTab(tabId, true, state.themeId);
   } catch {
     // ignore: permission not granted or injection blocked
   }
@@ -133,46 +119,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       await setTabOverride(tabId, !!msg.enabled);
       const state = await computeEffectiveState(tabId, url);
-      await applyToTab(tabId, state.enabled, state.themeId, state.intenseMode);
+      await applyToTab(tabId, state.enabled, state.themeId);
       sendResponse({ ok: true, ...state });
-      return;
-    }
-
-    if (msg.type === MessageType.SET_DISABLE_RULE) {
-      const settings = await getSettings();
-      const url = msg.url ?? sender?.tab?.url;
-      if (!url) {
-        sendResponse({ ok: false, error: "missing_url" });
-        return;
-      }
-
-      const origin = getOrigin(url);
-      const pageKey = getPageKey(url);
-
-      if (msg.scope === "origin" && origin) {
-        const next = new Set(settings.disableOrigins);
-        msg.disabled ? next.add(origin) : next.delete(origin);
-        await setSettings({ disableOrigins: [...next] });
-      }
-
-      if (msg.scope === "page" && pageKey) {
-        const next = new Set(settings.disablePages);
-        msg.disabled ? next.add(pageKey) : next.delete(pageKey);
-        await setSettings({ disablePages: [...next] });
-      }
-
-      // Clear any tab override so the disable takes effect.
-      if (sender?.tab?.id) await clearTabOverride(sender.tab.id);
-
-      sendResponse({ ok: true, settings: await getSettings() });
       return;
     }
 
     if (msg.type === MessageType.SET_THEME) {
       const themeId = String(msg.themeId || "classic");
       await setSettings({ themeId });
-
-      const settings = await getSettings();
 
       // If invoked from popup, re-apply to current tab.
       const tabId = sender?.tab?.id ?? msg.tabId;
@@ -181,7 +135,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const state = await computeEffectiveState(tabId, url);
         if (state.enabled) {
           try {
-            await applyToTab(tabId, true, themeId, settings.intenseMode);
+            await applyToTab(tabId, true, themeId);
           } catch {
             // ignore
           }
@@ -189,28 +143,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       sendResponse({ ok: true, themeId });
-      return;
-    }
-
-    if (msg.type === MessageType.SET_INTENSE_MODE) {
-      const intenseMode = !!msg.intenseMode;
-      await setSettings({ intenseMode });
-
-      // If invoked from the popup, re-apply to current tab.
-      const tabId = sender?.tab?.id ?? msg.tabId;
-      const url = sender?.tab?.url ?? msg.url;
-      if (tabId && url && !isRestrictedUrl(url)) {
-        const state = await computeEffectiveState(tabId, url);
-        if (state.enabled) {
-          try {
-            await applyToTab(tabId, true, state.themeId, intenseMode);
-          } catch {
-            // ignore
-          }
-        }
-      }
-
-      sendResponse({ ok: true, intenseMode });
       return;
     }
 

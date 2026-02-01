@@ -20,6 +20,10 @@ Umbreon is a Chrome dark mode extension (MV3) that applies dark themes to any we
 }
 ```
 
+**Failed Approach (Phase 3):** Attempted to detect dark sites at runtime by sampling background colors. This failed due to timing issues - detection requires styles to be loaded, but by then the page has already rendered with incorrect styles, causing visible flashing.
+
+**Solution (Phase 4):** Remove aggressive blanket overrides. Instead, rely on the contrast fixer which surgically modifies only elements with poor contrast. Dark sites naturally have good contrast, so the fixer leaves them alone.
+
 **User Impact:** Sites that are already dark become unreadable or visually broken.
 
 ### Issue 2: No Quick Auto-Enable Option
@@ -111,6 +115,83 @@ Rule: espn.com
 4. Result: MATCH
 ```
 
+### R4: Contrast-Based Dark Mode (Replaces Detection Approach)
+
+**Requirement:** Instead of detecting dark sites at runtime (which causes flashing), rely entirely on the contrast fixer to surgically apply dark mode only where needed.
+
+**Rationale:** Runtime detection has fundamental timing issues - by the time we can sample backgrounds reliably, the page has already rendered incorrectly. The contrast fixer approach works because:
+1. It runs after content loads and re-runs on mutations
+2. It only modifies elements with poor contrast (surgical precision)
+3. Dark sites already have good contrast, so the fixer naturally does nothing
+4. No flashing because we never remove/re-add attributes
+
+**Acceptance Criteria:**
+- [ ] Remove aggressive `!important` background overrides on `:root` and `body`
+- [ ] Keep CSS variable definitions for theming
+- [ ] Contrast fixer runs on page load and DOM mutations
+- [ ] Elements with poor contrast get fixed; elements with good contrast are untouched
+- [ ] Remove "Intense Mode" feature entirely (no longer needed)
+
+**Test Cases:**
+| Site | Expected Behavior |
+|------|-------------------|
+| ESPN.com (dark) | Minimal/no changes - already has good contrast |
+| Google.com (light) | Text darkened, backgrounds darkened where needed |
+| GitHub.com (dark mode) | Minimal changes - native appearance preserved |
+| Wikipedia.org (light) | Full dark treatment via contrast fixes |
+
+### R5: Simplified Enable/Disable Model
+
+**Requirement:** Remove confusing "Disable on this site" and "Disable on this page" options. Simplify to: auto-enable list OR manual toggle.
+
+**Current Problems:**
+- Three overlapping controls (Nightlight, Disable Site, Disable Page)
+- Confusing which takes precedence
+- Users don't understand the difference
+
+**New Model:**
+1. **Nightlight ON** → Dark mode on all sites (except restricted URLs)
+2. **Nightlight OFF** → Dark mode only on auto-enable sites OR manually toggled tabs
+3. **Tab toggle** → Temporary override for current session
+
+**Acceptance Criteria:**
+- [ ] Remove "Disable on this site" checkbox
+- [ ] Remove "Disable on this page" checkbox
+- [ ] Remove `disableRules` from storage
+- [ ] Popup shows only: toggle, auto-enable button, theme picker
+- [ ] State is clear and predictable
+
+### R6: Visual Theme Picker
+
+**Requirement:** Replace dropdown theme selector with visual preview squares showing each theme's colors.
+
+**Acceptance Criteria:**
+- [ ] Theme picker displays as row of colored squares
+- [ ] Each square previews the theme's background color
+- [ ] Selected theme has visible indicator (border/ring)
+- [ ] Clicking a square immediately applies that theme
+- [ ] Add 4 new themes: Nord, Dracula, Solarized, Monokai
+
+**Theme Palette:**
+| Theme | Background | Description |
+|-------|------------|-------------|
+| Amoled | `#000000` | Pure black for OLED screens |
+| Classic | `#0f1115` | Default dark gray |
+| Dim | `#0b1220` | Navy blue tint |
+| Sepia | `#14110d` | Warm brown tint |
+| Nord | `#2e3440` | Nordic blue-gray |
+| Dracula | `#282a36` | Purple-tinted dark |
+| Solarized | `#002b36` | Teal-tinted dark |
+| Monokai | `#272822` | Warm olive dark |
+
+**UI Mockup:**
+```
+Theme:
+[■] [■] [■] [■] [■] [■] [■] [■]
+ ▲
+ └── Selected (border highlight)
+```
+
 ---
 
 ## Technical Design
@@ -163,24 +244,32 @@ Rule: espn.com
 | File | Change Type | Description |
 |------|-------------|-------------|
 | `src/shared/url_match.js` | Modify | Add `domainMatches()` helper, update `ruleMatchesUrl()` |
-| `src/popup/popup.html` | Modify | Add auto-enable button and hint element |
-| `src/popup/popup.js` | Modify | Add button handler, update `refresh()` for state |
-| `src/content/content.js` | Modify | Add dark site detection, conditional CSS application |
+| `src/popup/popup.html` | Modify | Simplify UI, add theme picker, remove disable checkboxes |
+| `src/popup/popup.js` | Modify | Add auto-enable button, theme picker, remove disable logic |
+| `src/popup/popup.css` | Modify | Add theme picker styles |
+| `src/content/content.js` | Major rewrite | Remove aggressive CSS, remove detection, enhance contrast fixer, add themes |
+| `src/options/options.html` | Modify | Remove intense mode, add theme picker |
+| `src/options/options.js` | Modify | Remove intense mode, disable rules; add theme picker |
+| `src/background/service_worker.js` | Modify | Remove intense mode, simplify state computation |
+| `src/shared/storage.js` | Modify | Remove `disableRules`, `intenseMode` from schema |
+| `src/shared/messaging.js` | Modify | Remove disable-related message types |
 
 ---
 
 ## Out of Scope
 
-- Custom user-configurable luminance thresholds
+- Custom user-configurable contrast thresholds
 - Per-site theme customization
-- Whitelist/blacklist of elements to skip
-- Visual indicator in popup showing detection result
-- Migration of existing rules to new format
+- Whitelist/blacklist of specific elements
+- Automatic theme detection based on system preference
+- Import/export of settings
 
 ---
 
 ## Success Metrics
 
-1. **Dark site compatibility:** ESPN.com and similar dark sites should be readable with extension enabled
+1. **Dark site compatibility:** ESPN.com and similar dark sites remain readable with extension enabled - no double-darkening or flashing
 2. **User workflow:** Adding a site to auto-enable takes 1 click instead of 4+ clicks
 3. **Rule simplicity:** One rule covers all subdomains of a site
+4. **UI clarity:** Users understand the enable/disable model without confusion
+5. **Visual appeal:** Theme picker is intuitive and shows theme colors at a glance
