@@ -485,43 +485,59 @@ New simplified layout implemented:
 
 ## Phase 6: Visual Theme Picker
 
-**Status:** Not Started
+**Status:** ✅ COMPLETE
 
-Replace dropdown theme selector with visual preview squares.
+Replaced dropdown theme selector with visual preview squares.
 
-### Tasks
+### Completed Tasks
 
 #### Design Theme Preview Component
 
-- [ ] Create CSS for theme preview squares (24x24px or similar)
-- [ ] Each square shows the theme's `--umb-bg` color
-- [ ] Selected theme has a visible border/ring
-- [ ] Hover state shows theme name tooltip
+- [x] Create CSS for theme preview squares (28x28px in popup, 60px height in options)
+- [x] Each square shows the theme's `--umb-bg` color
+- [x] Selected theme has a visible border/ring with blue accent
+- [x] Hover state with border and scale effect
+- [x] Added tooltips via title attribute (popup only)
 
 #### Add New Themes
 
-- [ ] **Amoled** (existing): Pure black `#000`
-- [ ] **Classic** (existing): Dark gray `#0f1115`
-- [ ] **Dim** (existing): Navy blue `#0b1220`
-- [ ] **Sepia** (existing): Warm brown `#14110d`
-- [ ] **Nord**: Nordic blue `#2e3440`
-- [ ] **Dracula**: Purple-tinted `#282a36`
-- [ ] **Solarized**: Teal-tinted `#002b36`
-- [ ] **Monokai**: Warm dark `#272822`
+- [x] **Amoled** (existing): Pure black `#000`
+- [x] **Classic** (existing): Dark gray `#0f1115`
+- [x] **Dim** (existing): Navy blue `#0b1220`
+- [x] **Sepia** (existing): Warm brown `#14110d`
+- [x] **Nord**: Nordic blue `#2e3440`
+- [x] **Dracula**: Purple-tinted `#282a36`
+- [x] **Solarized**: Teal-tinted `#002b36`
+- [x] **Monokai**: Warm dark `#272822`
 
 #### Implement in Popup
 
-- [ ] Remove `<select>` dropdown for theme
-- [ ] Add horizontal row of theme squares
-- [ ] Click square to select theme
-- [ ] Store selection in `chrome.storage.sync`
-- [ ] Update `themeCss()` in content.js with new theme definitions
+- [x] Removed `<select>` dropdown for theme
+- [x] Added horizontal row of theme swatches (28x28px)
+- [x] Click swatch to select theme
+- [x] Selection stored in `chrome.storage.sync`
+- [x] Updated `themeCss()` in content.js with new theme definitions
+- [x] Added `.theme-picker` and `.theme-swatch` CSS classes
 
 #### Implement in Options Page
 
-- [ ] Same visual picker as popup
-- [ ] Larger squares with theme names below
-- [ ] Live preview panel showing sample text/backgrounds
+- [x] Replaced dropdown with visual grid picker
+- [x] Larger theme cards (140px wide) with theme names below
+- [x] Grid layout with responsive columns
+- [x] Theme preview squares (60px height)
+- [x] Click interaction with visual feedback
+- [x] Added `.theme-grid`, `.theme-card`, `.theme-preview`, `.theme-name` CSS classes
+
+### Verification Results
+
+- [x] Options page displays all 8 themes in grid layout
+- [x] Theme selection visual feedback works (blue border on selected theme)
+- [x] Clicking themes updates selection correctly (tested Nord and Dracula)
+- [x] Theme changes persist and apply to web pages
+- [x] Wikipedia.org renders correctly with Dracula theme
+- [x] No console errors on options page or content pages
+- [x] Popup theme swatches display in horizontal row with proper spacing
+- [x] Hover effects work on both popup and options page
 
 ### Theme Square CSS
 
@@ -586,10 +602,12 @@ Replace dropdown theme selector with visual preview squares.
 
 ### Theme Picker Tests (Phase 6)
 
-- [ ] All 8 themes render correctly
-- [ ] Click theme → Immediately applies
-- [ ] Selected state visible
-- [ ] Persists across popup close/reopen
+- [x] All 8 themes render correctly
+- [x] Click theme → Immediately applies
+- [x] Selected state visible
+- [x] Persists across popup close/reopen
+- [x] Options page grid layout displays properly
+- [x] Theme names display below preview squares
 
 ---
 
@@ -613,5 +631,5 @@ If issues arise, changes can be reverted phase by phase:
 | Phase 2 | popup.html, popup.js | ~40 | 0 |
 | Phase 4 | content.js, options.*, service_worker.js | ~20 | ~150 |
 | Phase 5 | popup.*, storage.js, service_worker.js | ~10 | ~80 |
-| Phase 6 | popup.*, options.*, content.js | ~100 | ~20 |
-| **Total** | | **~185** | **~250** |
+| Phase 6 | popup.*, options.*, content.js | ~120 | ~25 |
+| **Total** | | **~205** | **~275** |

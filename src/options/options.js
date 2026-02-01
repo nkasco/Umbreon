@@ -7,9 +7,19 @@ async function load() {
   if (!res?.ok) return;
 
   const { settings, hasAllSites } = res;
-  applyUiTheme(settings.themeId || "classic");
+  const currentTheme = settings.themeId || "classic";
+  applyUiTheme(currentTheme);
   document.getElementById("nightlight").checked = !!settings.nightlightEnabled;
-  document.getElementById("theme").value = settings.themeId || "classic";
+
+  // Update theme card selection
+  const themeCards = document.querySelectorAll(".theme-card");
+  for (const card of themeCards) {
+    if (card.dataset.theme === currentTheme) {
+      card.classList.add("selected");
+    } else {
+      card.classList.remove("selected");
+    }
+  }
 
   renderRules(settings.autoActivateRules || []);
   renderNightlightHint(!!settings.nightlightEnabled, !!hasAllSites);
@@ -74,10 +84,14 @@ document.getElementById("nightlight").addEventListener("change", async (e) => {
   await refresh();
 });
 
-document.getElementById("theme").addEventListener("change", async (e) => {
-  const themeId = e.target.value;
-  await chrome.runtime.sendMessage({ type: MessageType.SET_THEME, themeId });
-  applyUiTheme(themeId);
+// Theme card click handlers
+document.querySelectorAll(".theme-card").forEach((card) => {
+  card.addEventListener("click", async () => {
+    const themeId = card.dataset.theme;
+    await chrome.runtime.sendMessage({ type: MessageType.SET_THEME, themeId });
+    applyUiTheme(themeId);
+    await refresh();
+  });
 });
 
 document.getElementById("addRule").addEventListener("click", async () => {

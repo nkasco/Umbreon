@@ -553,6 +553,14 @@ ${on} canvas {
         return `:root[${UMB_ATTR}="on"]{--umb-bg:#0b1220;--umb-bg2:#101a2e;--umb-text:#e9eefc;--umb-muted:#b7c2dd;--umb-link:#7dd3fc;--umb-border:#1f2a44;--umb-shadow:rgba(0,0,0,.4);}`;
       case "sepia":
         return `:root[${UMB_ATTR}="on"]{--umb-bg:#14110d;--umb-bg2:#1b160f;--umb-text:#f0e6d6;--umb-muted:#d0c1aa;--umb-link:#f6c177;--umb-border:#2a2318;--umb-shadow:rgba(0,0,0,.35);}`;
+      case "nord":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#2e3440;--umb-bg2:#3b4252;--umb-text:#eceff4;--umb-muted:#d8dee9;--umb-link:#88c0d0;--umb-border:#434c5e;--umb-shadow:rgba(0,0,0,.3);}`;
+      case "dracula":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#282a36;--umb-bg2:#343746;--umb-text:#f8f8f2;--umb-muted:#bfbfbf;--umb-link:#bd93f9;--umb-border:#44475a;--umb-shadow:rgba(0,0,0,.4);}`;
+      case "solarized":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#002b36;--umb-bg2:#073642;--umb-text:#fdf6e3;--umb-muted:#93a1a1;--umb-link:#268bd2;--umb-border:#073642;--umb-shadow:rgba(0,0,0,.35);}`;
+      case "monokai":
+        return `:root[${UMB_ATTR}="on"]{--umb-bg:#272822;--umb-bg2:#3e3d32;--umb-text:#f8f8f2;--umb-muted:#a59f85;--umb-link:#66d9ef;--umb-border:#49483e;--umb-shadow:rgba(0,0,0,.4);}`;
       case "classic":
       default:
         return `:root[${UMB_ATTR}="on"]{--umb-bg:#0f1115;--umb-bg2:#141821;--umb-text:#e6eaf2;--umb-muted:#aeb8cc;--umb-link:#8ab4f8;--umb-border:#2a3140;--umb-shadow:rgba(0,0,0,.35);}`;

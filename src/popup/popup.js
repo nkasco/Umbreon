@@ -9,8 +9,11 @@ async function getActiveTab() {
 
 function setDisabled(disabled) {
   document.getElementById("toggleBtn").disabled = disabled;
-  document.getElementById("themeSelect").disabled = disabled;
   document.getElementById("autoEnableSite").disabled = disabled;
+  const swatches = document.querySelectorAll(".theme-swatch");
+  for (const swatch of swatches) {
+    swatch.disabled = disabled;
+  }
 }
 
 async function refresh() {
@@ -41,7 +44,16 @@ async function refresh() {
 
   setDisabled(false);
 
-  document.getElementById("themeSelect").value = state.themeId || "classic";
+  // Update theme picker selection
+  const currentTheme = state.themeId || "classic";
+  const swatches = document.querySelectorAll(".theme-swatch");
+  for (const swatch of swatches) {
+    if (swatch.dataset.theme === currentTheme) {
+      swatch.classList.add("selected");
+    } else {
+      swatch.classList.remove("selected");
+    }
+  }
 
   // Update status hint to show if it's auto-enabled or manual
   let statusText = state.enabled ? "Enabled" : "Disabled";
@@ -96,18 +108,22 @@ document.getElementById("toggleBtn").addEventListener("click", async () => {
   await refresh();
 });
 
-document.getElementById("themeSelect").addEventListener("change", async (e) => {
-  const tab = await getActiveTab();
-  await chrome.runtime.sendMessage({
-    type: MessageType.SET_THEME,
-    themeId: e.target.value,
-    tabId: tab?.id,
-    url: tab?.url
+// Theme swatch click handlers
+document.querySelectorAll(".theme-swatch").forEach((swatch) => {
+  swatch.addEventListener("click", async () => {
+    const themeId = swatch.dataset.theme;
+    const tab = await getActiveTab();
+
+    await chrome.runtime.sendMessage({
+      type: MessageType.SET_THEME,
+      themeId,
+      tabId: tab?.id,
+      url: tab?.url
+    });
+
+    applyUiTheme(themeId);
+    await refresh();
   });
-
-  applyUiTheme(e.target.value);
-
-  await refresh();
 });
 
 document.getElementById("openOptions").addEventListener("click", async () => {

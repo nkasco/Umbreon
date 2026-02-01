@@ -39,3 +39,30 @@ body {
 select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--umb-border); background: var(--umb-bg); color: var(--umb-text); }
 
 .footer { margin-top: 10px; color: var(--umb-muted); font-size: 12px; }
+
+.theme-picker {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.theme-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.theme-swatch:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.theme-swatch.selected {
+  border-color: var(--umb-link);
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.3);
+}
